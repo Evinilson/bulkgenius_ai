@@ -1,0 +1,21 @@
+{
+  "name": "bulkgenius/bulkgenius-ai",
+  "description": "PrestaShop module: bulk product import with AI content generation",
+  "type": "prestashop-module",
+  "require": {
+    "php": ">=8.1",
+    "phpoffice/phpspreadsheet": "^1.29"
+  },
+  "autoload": {
+    "psr-4": {
+      "BulkGeniusAi\\": "classes/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Impulso Digital",
+      "email": "info@impulsodigital.pt"
+    }
+  ],
+  "minimum-stability": "stable"
+}
