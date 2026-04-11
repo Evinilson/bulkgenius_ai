@@ -98,7 +98,7 @@ The first row must contain column headers (Portuguese or English accepted):
 
 **1. Clone or download the module**
 ```bash
-git clone https://github.com/YOUR_USERNAME/bulkgenius-ai.git
+git clone https://github.com/evinilson/bulkgenius-ai.git
 ```
 
 **2. Install PHP dependencies**
