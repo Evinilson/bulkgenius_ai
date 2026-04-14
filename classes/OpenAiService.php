@@ -1,5 +1,4 @@
 <?php
-namespace BulkGeniusAi;
 /**
  * OpenAiService - Implementação para OpenAI
  */

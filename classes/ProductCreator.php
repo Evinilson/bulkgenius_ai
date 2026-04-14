@@ -1,5 +1,4 @@
 <?php
-namespace BulkGeniusAi;
 /**
  * ProductCreator - Cria produtos no PrestaShop via API nativa
  */

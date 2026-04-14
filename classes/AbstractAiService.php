@@ -1,5 +1,4 @@
 <?php
-namespace BulkGeniusAi;
 /**
  * Classe base para serviços de IA
  */

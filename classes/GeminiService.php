@@ -1,5 +1,4 @@
 <?php
-namespace BulkGeniusAi;
 /**
  * GeminiService - Implementação para Google Gemini
  */

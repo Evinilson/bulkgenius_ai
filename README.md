@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![BulkGenius AI](https://img.shields.io/badge/BulkGenius-AI-6366f1?style=for-the-badge&logo=sparkles&logoColor=white)
+![BulkGenius AI](https://img.shields.io/badge/BulkGenius_AI-6366f1?style=for-the-badge&logo=sparkles&logoColor=white)
 ![PrestaShop](https://img.shields.io/badge/PrestaShop-8.x-DF0067?style=for-the-badge&logo=prestashop&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.1+-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)
@@ -98,18 +98,18 @@ The first row must contain column headers (Portuguese or English accepted):
 
 **1. Clone or download the module**
 ```bash
-git clone https://github.com/evinilson/bulkgenius-ai.git
+git clone https://github.com/evinilson/bulkgenius_ai.git
 ```
 
 **2. Install PHP dependencies**
 ```bash
-cd bulkgenius-ai
+cd bulkgenius_ai
 composer install --no-dev
 ```
 
 **3. Copy to your PrestaShop modules folder**
 ```bash
-cp -r bulkgenius-ai/ /path/to/prestashop/modules/bulkgenius_ai/
+cp -r bulkgenius_ai/ /path/to/prestashop/modules/bulkgenius_ai/
 ```
 
 **4. Install via PrestaShop Back Office**
@@ -202,7 +202,7 @@ Built by **Evinilson Fernandes** — Full Stack Developer from Portugal 🇵🇹
 
 - GitHub: [@Evinilson](https://github.com/Evinilson)
 - LinkedIn: [linkedin.com/in/evinilson-fernandes](https://linkedin.com/in/evinilson-fernandes)
-- WebSummit 2025: Find me there! 👋
+- WebSummit 2026: Find me there! 👋
 
 ---
 

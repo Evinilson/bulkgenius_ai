@@ -1,5 +1,4 @@
 <?php
-namespace BulkGeniusAi;
 /**
  * AiServiceFactory - Fábrica para instanciar o serviço de IA correto
  */

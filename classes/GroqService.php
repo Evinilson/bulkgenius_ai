@@ -1,5 +1,4 @@
 <?php
-namespace BulkGeniusAi;
 /**
  * GroqService - Implementação para Groq (OpenAI Compatible)
  */

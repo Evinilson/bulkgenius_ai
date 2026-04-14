@@ -21,10 +21,14 @@ class BulkGenius_Ai extends Module
 
         parent::__construct();
 
+        if (file_exists(_PS_MODULE_DIR_ . $this->name . '/vendor/autoload.php')) {
+            require_once _PS_MODULE_DIR_ . $this->name . '/vendor/autoload.php';
+        }
+
         $this->displayName = $this->l('BulkGenius AI');
         $this->description = $this->l('Importa produtos em massa via Excel com descrições geradas por IA (OpenAI, Gemini, Groq).');
         $this->confirmUninstall = $this->l('Tem a certeza que quer desinstalar este módulo?');
-        $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION];
+        $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION ];
     }
 
     public function install()

@@ -73,7 +73,7 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         }
 
         try {
-            $reader = new \BulkGeniusAi\ExcelReader($_FILES['excel_file']['tmp_name'], $_FILES['excel_file']['name']);
+            $reader = new ExcelReader($_FILES['excel_file']['tmp_name'], $_FILES['excel_file']['name']);
             $rows = $reader->getRows();
             echo json_encode(['success' => true, 'rows' => array_slice($rows, 0, 5), 'total' => count($rows)]);
         } catch (Throwable $e) {
@@ -112,10 +112,10 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         }
 
         try {
-            $reader      = new \BulkGeniusAi\ExcelReader($_FILES['excel_file']['tmp_name'], $_FILES['excel_file']['name']);
+            $reader      = new ExcelReader($_FILES['excel_file']['tmp_name'], $_FILES['excel_file']['name']);
             $rows        = $reader->getRows();
-            $aiService   = \BulkGeniusAi\AiServiceFactory::create();
-            $creator     = new \BulkGeniusAi\ProductCreator(
+            $aiService   = AiServiceFactory::create();
+            $creator     = new ProductCreator(
                 (int) Configuration::get('BULKGENIUS_AI_CATEGORY'),
                 Configuration::get('BULKGENIUS_AI_LANG')
             );
@@ -192,7 +192,7 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 throw new Exception('Provedor não especificado.');
             }
 
-            $aiService = \BulkGeniusAi\AiServiceFactory::create((string)$provider, (string)$model, (string)$apiKey);
+            $aiService = AiServiceFactory::create((string)$provider, (string)$model, (string)$apiKey);
             $success = $aiService->testConnection();
             echo json_encode(['success' => $success, 'message' => 'Ligação estabelecida com sucesso!']);
         } catch (Throwable $e) {
