@@ -12,6 +12,10 @@
       (wrapEl && wrapEl.getAttribute('data-action-url')) ||
       '';
     let selectedFile = null;
+    let importingRows = [];
+    let isImporting = false;
+    let stopImportFlag = false;
+    let stats = { success: 0, error: 0 };
 
     // ── Configuração de Provedores ─────────────────────────
     const providerModels = {
@@ -124,6 +128,7 @@
       fd.append('action', 'preview');
       fd.append('excel_file', file);
       fd.append('ajax', '1');
+      fd.append('token', window.AI_IMPORTER && window.AI_IMPORTER.token || '');
 
       showLoading('A ler o ficheiro...');
 
@@ -136,7 +141,8 @@
         success: function (res) {
           hideLoading();
           if (res.success) {
-            renderPreview(res.rows, res.total, file.name);
+            importingRows = res.rows;
+            renderPreview(res.rows.slice(0, 5), res.total, file.name);
           } else {
             showAlert('danger', res.message || 'Erro ao ler ficheiro.');
           }
@@ -188,26 +194,107 @@
     const btnImport = document.getElementById('btn-import');
     if (btnImport) {
       btnImport.addEventListener('click', function () {
-        if (!selectedFile) return;
-        if (!actionUrl) {
-          showAlert('danger', 'URL de ação não encontrada. Recarregue a página.');
-          return;
+        if (!importingRows || importingRows.length === 0) return;
+        
+        startImportProcess();
+      });
+    }
+
+    const btnCancelImport = document.getElementById('btn-cancel-import');
+    if (btnCancelImport) {
+      btnCancelImport.addEventListener('click', function () {
+        if (confirm('Tens a certeza que queres cancelar a importação?')) {
+          stopImportFlag = true;
+          setProgressText('A cancelar... Por favor aguarde.');
+          $(this).prop('disabled', true);
         }
+      });
+    }
 
+    async function startImportProcess() {
+      isImporting = true;
+      stopImportFlag = false;
+      currentIndex = 0;
+      stats = { success: 0, error: 0 };
+
+      const previewSection = document.getElementById('preview-section');
+      const progressSection = document.getElementById('progress-section');
+      const resultsSection = document.getElementById('results-section');
+
+      if (previewSection) previewSection.style.display = 'none';
+      if (progressSection) progressSection.style.display = 'block';
+      if (resultsSection) resultsSection.style.display = 'none';
+
+      // Reset logs
+      const logsBody = document.getElementById('logs-body');
+      if (logsBody) logsBody.innerHTML = '';
+      
+      updateProgressBar(0, importingRows.length);
+      
+      // Beforeunload protection
+      window.addEventListener('beforeunload', preventExiting);
+
+      await runImportLoop();
+    }
+
+    async function runImportLoop() {
+      const CONCURRENCY = 3; // Número de produtos a processar em simultâneo
+      const total = importingRows.length;
+      let nextIndex = 0;
+      let doneCount = 0;
+
+      async function worker() {
+        while (true) {
+          if (stopImportFlag) {
+            addLog('warning', 'Interrompido', 'A importação foi cancelada pelo utilizador.');
+            break;
+          }
+
+          const index = nextIndex++;
+          if (index >= total) break;
+
+          const product = importingRows[index];
+
+          try {
+            const result = await processSingleProduct(product);
+            if (result.success) {
+              stats.success++;
+              addLog('success', product.name, 'Produto criado com sucesso! ID: ' + result.id, result.id);
+            } else {
+              stats.error++;
+              addLog('danger', product.name, result.message || 'Erro desconhecido.');
+            }
+          } catch (e) {
+            stats.error++;
+            addLog('danger', product.name, 'Erro de comunicação: ' + e.message);
+          }
+
+          doneCount++;
+          updateProgressBar(doneCount, total, product.name);
+        }
+      }
+
+      // Lança N workers em paralelo
+      const workers = [];
+      for (let i = 0; i < Math.min(CONCURRENCY, total); i++) {
+        workers.push(worker());
+      }
+      await Promise.all(workers);
+
+      finishImport();
+    }
+
+    function processSingleProduct(product) {
+      return new Promise((resolve, reject) => {
         const fd = new FormData();
-        fd.append('action', 'import');
-        fd.append('excel_file', selectedFile);
+        fd.append('action', 'import_single');
         fd.append('ajax', '1');
-
-        const previewSection = document.getElementById('preview-section');
-        const progressSection = document.getElementById('progress-section');
-        const resultsSection = document.getElementById('results-section');
-
-        if (previewSection) previewSection.style.display = 'none';
-        if (progressSection) progressSection.style.display = 'block';
-        if (resultsSection) resultsSection.style.display = 'none';
-
-        setProgressText('A processar produtos com IA... Isto pode demorar alguns minutos.');
+        fd.append('token', window.AI_IMPORTER && window.AI_IMPORTER.token || '');
+        
+        // Passamos os campos individualmente ou como array
+        for(let key in product) {
+          fd.append(`product[${key}]`, product[key]);
+        }
 
         $.ajax({
           url: actionUrl,
@@ -215,36 +302,92 @@
           data: fd,
           processData: false,
           contentType: false,
-          timeout: 600000, // 10 min
-          success: function (res) {
-            if (progressSection) progressSection.style.display = 'none';
-            if (res.success) {
-              renderResults(res);
-            } else {
-              showAlert('danger', res.message || 'Erro na importação.');
-              resetUpload();
-            }
-          },
-          error: function (xhr) {
-            if (progressSection) progressSection.style.display = 'none';
-            let errorMsg = 'Erro de comunicação.';
-            console.error('AJAX Error Detail:', xhr);
-            
-            if (xhr.status === 504 || xhr.status === 500 || xhr.status === 0) {
-              errorMsg += ' (Status: ' + xhr.status + ') O servidor pode ter crashado ou bloqueado o pedido. ';
-              if (xhr.responseText) {
-                  // Tenta extrair um erro PHP se houver
-                  console.log('Server Response:', xhr.responseText);
-                  errorMsg += ' Verifique o console do browser para mais detalhes.';
-              }
-            } else if (xhr.responseJSON && xhr.responseJSON.message) {
-              errorMsg = xhr.responseJSON.message;
-            }
-            showAlert('danger', errorMsg);
-            resetUpload();
-          }
+          success: resolve,
+          error: (xhr) => reject(new Error('Status: ' + xhr.status))
         });
       });
+    }
+
+    function updateProgressBar(current, total, name = '') {
+      const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+      const bar = document.getElementById('progress-bar');
+      const text = document.getElementById('progress-text');
+      const proc = document.getElementById('stat-processed');
+      const tot = document.getElementById('stat-total');
+
+      if (bar) {
+        bar.style.width = pct + '%';
+        bar.textContent = pct + '%';
+      }
+      if (text && name) {
+        text.innerHTML = `A processar: <strong>${escHtml(name)}</strong>`;
+      }
+      if (proc) proc.textContent = current;
+      if (tot) tot.textContent = total;
+    }
+
+    function addLog(type, name, message, productId = null) {
+      const logsBody = document.getElementById('logs-body');
+      if (!logsBody) return;
+
+      const icon = type === 'success' ? 'icon-check' : (type === 'danger' ? 'icon-remove' : 'icon-warning');
+      const row = document.createElement('tr');
+      row.className = 'logs-row-new'; // Adiciona animação de entrada
+      
+      let actionHtml = '';
+      if (productId) {
+          actionHtml = `<a href="index.php?controller=AdminProducts&id_product=${productId}&updateproduct" 
+                           target="_blank" class="btn btn-default btn-xs btn-view-product" style="margin-left:10px">
+                           <i class="icon-external-link"></i> Ver produto
+                        </a>`;
+      }
+
+      row.innerHTML = `
+        <td><span class="log-status ${type}"><i class="${icon}"></i></span></td>
+        <td><strong>${escHtml(name)}</strong></td>
+        <td>
+            <small>${escHtml(message)}</small>
+            ${actionHtml}
+        </td>
+      `;
+      
+      logsBody.insertBefore(row, logsBody.firstChild);
+    }
+
+    function finishImport() {
+      isImporting = false;
+      window.removeEventListener('beforeunload', preventExiting);
+      
+      updateProgressBar(importingRows.length, importingRows.length);
+      setProgressText('Concluído!');
+
+      // Parar animação da barra e spinner
+      $('#progress-bar').removeClass('active progress-bar-striped').addClass('progress-bar-success');
+      $('.ai-spinner').addClass('hidden');
+      
+      const btnCancel = document.getElementById('btn-cancel-import');
+      if (btnCancel) btnCancel.style.display = 'none';
+
+      // Esconder a caixa de progresso após 2 segundos, mantendo apenas logs e resultados
+      setTimeout(() => {
+        $('.ai-progress-box').slideUp();
+      }, 2000);
+
+      // Mostrar resumo final
+      setTimeout(() => {
+        renderResults({
+          success: true,
+          created: stats.success,
+          errors: stats.error,
+          results: [], // Não precisamos mais deste array grande aqui
+          error_details: [] 
+        });
+      }, 1000);
+    }
+
+    function preventExiting(e) {
+      e.preventDefault();
+      e.returnValue = '';
     }
 
     function renderResults(res) {
@@ -373,6 +516,7 @@
       fd.append('groq_key', $('input[name="groq_key"]').val());
       fd.append('ai_model', aiModel.value);
       fd.append('ajax', '1');
+      fd.append('token', window.AI_IMPORTER && window.AI_IMPORTER.token || '');
 
       $.ajax({
         url: actionUrl,

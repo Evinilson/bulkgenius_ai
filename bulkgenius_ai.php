@@ -8,7 +8,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class BulkGenius_Ai extends Module
+class Bulkgenius_Ai extends Module
 {
     public function __construct()
     {
@@ -28,7 +28,7 @@ class BulkGenius_Ai extends Module
         $this->displayName = $this->l('BulkGenius AI');
         $this->description = $this->l('Importa produtos em massa via Excel com descrições geradas por IA (OpenAI, Gemini, Groq).');
         $this->confirmUninstall = $this->l('Tem a certeza que quer desinstalar este módulo?');
-        $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION ];
+        $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_ ];
     }
 
     public function install()

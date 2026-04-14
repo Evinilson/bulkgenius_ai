@@ -164,8 +164,38 @@
           <p id="progress-text" class="progress-text">
             {l s='A processar produtos com IA...' mod='bulkgenius_ai'}
           </p>
-          <div class="progress">
-            <div id="progress-bar" class="progress-bar progress-bar-striped active" style="width:100%"></div>
+          <div class="progress" style="height: 20px; margin-bottom: 20px;">
+            <div id="progress-bar" class="progress-bar progress-bar-striped active" role="progressbar" style="width: 0%">
+              0%
+            </div>
+          </div>
+          <div class="progress-stats-mini">
+             <span id="stat-processed">0</span> / <span id="stat-total">0</span> {l s='produtos processados' mod='bulkgenius_ai'}
+          </div>
+          <button type="button" id="btn-cancel-import" class="btn btn-danger-outline btn-sm" style="margin-top:15px">
+            <i class="icon-remove"></i> {l s='Cancelar Importação' mod='bulkgenius_ai'}
+          </button>
+        </div>
+
+        {* Lista de Logs em Tempo Real *}
+        <div class="ai-realtime-logs" style="margin-top:30px">
+          <h5 style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            {l s='Registo de Processamento' mod='bulkgenius_ai'}
+            <small id="current-op-info" class="text-muted"></small>
+          </h5>
+          <div class="logs-container">
+            <table class="table table-condensed" id="logs-table">
+              <thead>
+                <tr>
+                  <th width="80">{l s='Estado' mod='bulkgenius_ai'}</th>
+                  <th>{l s='Produto' mod='bulkgenius_ai'}</th>
+                  <th>{l s='Resultado/Erro' mod='bulkgenius_ai'}</th>
+                </tr>
+              </thead>
+              <tbody id="logs-body">
+                {* Preenchido via JS *}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

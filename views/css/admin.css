@@ -127,3 +127,136 @@
   font-size: 12px;
   color: #3498db;
 }
+
+/* Progressive Import Styles */
+.progress-stats-mini {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #555;
+  font-weight: 600;
+}
+
+.logs-container {
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.logs-container table {
+  margin-bottom: 0;
+  border: none;
+}
+
+.logs-container thead th {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 15px !important;
+  border-bottom: 2px solid #edf2f7 !important;
+}
+
+.logs-container table td {
+  padding: 14px 15px !important;
+  vertical-align: middle !important;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s ease;
+}
+
+.logs-row-new {
+  animation: rowIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+#logs-body tr:hover td {
+  background-color: #f8fbff;
+}
+
+.log-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.log-status:hover {
+  transform: scale(1.1);
+}
+
+.log-status.success {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: #fff;
+}
+
+.log-status.danger {
+  background: linear-gradient(135deg, #ff7675, #d63031);
+  color: #fff;
+}
+
+.log-status.warning {
+  background: linear-gradient(135deg, #feca57, #f39c12);
+  color: #fff;
+}
+
+/* Ver Produto Button Premium */
+.btn-view-product {
+  background: #fff;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  color: #4a5568 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 5px 15px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s ease !important;
+}
+
+.btn-view-product:hover {
+  border-color: #3498db !important;
+  color: #3498db !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(52, 152, 219, 0.1);
+}
+
+.btn-view-product i {
+  margin-right: 4px;
+}
+
+/* Utils */
+.hidden {
+  display: none !important;
+}
+
+/* Animations */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+    background-color: #fff9db; /* Destaque temporário */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    background-color: transparent;
+  }
+}

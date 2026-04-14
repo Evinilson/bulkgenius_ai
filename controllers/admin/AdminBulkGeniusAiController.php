@@ -40,6 +40,9 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 case 'preview':
                     $this->processPreview();
                     break;
+                case 'import_single':
+                    $this->processImportSingle();
+                    break;
                 case 'test_connection':
                     $this->processTestConnection();
                     break;
@@ -66,6 +69,7 @@ class AdminBulkGeniusAiController extends ModuleAdminController
     private function processPreview()
     {
         header('Content-Type: application/json');
+        $this->checkAjaxToken();
 
         if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {
             echo json_encode(['success' => false, 'message' => 'Erro ao carregar ficheiro.']);
@@ -75,22 +79,39 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         try {
             $reader = new ExcelReader($_FILES['excel_file']['tmp_name'], $_FILES['excel_file']['name']);
             $rows = $reader->getRows();
-            echo json_encode(['success' => true, 'rows' => array_slice($rows, 0, 5), 'total' => count($rows)]);
+            echo json_encode(['success' => true, 'rows' => $rows, 'total' => count($rows)]);
         } catch (Throwable $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
     }
 
-    private function processImport()
+    private function processImportSingle()
     {
-        @ini_set('display_errors', 1);
-        @error_reporting(E_ALL);
-        @set_time_limit(600); // 10 minutos
-        @ini_set('max_execution_time', 600);
-        @ini_set('memory_limit', '512M');
-
+        @ini_set('display_errors', 0);
+        @set_time_limit(120);
         header('Content-Type: application/json');
+        $this->checkAjaxToken();
+
+        // Liberta o lock da sessão PHP para que pedidos paralelos não fiquem à espera
+        session_write_close();
+
+        $productData = Tools::getValue('product');
+        if (!$productData || !is_array($productData)) {
+            echo json_encode(['success' => false, 'message' => 'Dados do produto em falta.']);
+            exit;
+        }
+
+        // Sanitizar e validar campos obrigatórios
+        $productData['name']              = strip_tags(trim((string) ($productData['name'] ?? '')));
+        $productData['reference']         = preg_replace('/[^a-zA-Z0-9\-_\.\/]/', '', trim((string) ($productData['reference'] ?? '')));
+        $productData['price']             = (float) str_replace(',', '.', preg_replace('/[^0-9,.]/', '', (string) ($productData['price'] ?? '0')));
+        $productData['short_description'] = strip_tags(trim((string) ($productData['short_description'] ?? '')));
+
+        if (empty($productData['name'])) {
+            echo json_encode(['success' => false, 'message' => 'Nome do produto é obrigatório.']);
+            exit;
+        }
 
         $provider = Configuration::get('BULKGENIUS_AI_PROVIDER') ?: 'openai';
         $keyMap = [
@@ -106,64 +127,37 @@ class AdminBulkGeniusAiController extends ModuleAdminController
             exit;
         }
 
-        if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {
-            echo json_encode(['success' => false, 'message' => 'Erro ao carregar ficheiro Excel.']);
-            exit;
-        }
-
         try {
-            $reader      = new ExcelReader($_FILES['excel_file']['tmp_name'], $_FILES['excel_file']['name']);
-            $rows        = $reader->getRows();
-            $aiService   = AiServiceFactory::create();
-            $creator     = new ProductCreator(
+            $aiService = AiServiceFactory::create();
+            $creator = new ProductCreator(
                 (int) Configuration::get('BULKGENIUS_AI_CATEGORY'),
                 Configuration::get('BULKGENIUS_AI_LANG')
             );
 
-            $results = [];
-            $errors  = [];
+            // Gerar conteúdo com IA
+            $aiContent = $aiService->generateProductContent(
+                $productData['name'],
+                $productData['reference'],
+                $productData['short_description'],
+                Configuration::get('BULKGENIUS_AI_LANG')
+            );
 
-            foreach ($rows as $index => $row) {
-                try {
-                    // Gerar conteúdo com IA
-                    $aiContent = $aiService->generateProductContent(
-                        $row['name'],
-                        $row['reference'],
-                        $row['short_description'],
-                        Configuration::get('BULKGENIUS_AI_LANG')
-                    );
-
-                    // Criar produto no PrestaShop
-                    $productId = $creator->create([
-                        'name'             => $row['name'],
-                        'reference'        => $row['reference'],
-                        'price'            => $row['price'],
-                        'description'      => $aiContent['description'],
-                        'description_short'=> $aiContent['description_short'],
-                        'meta_title'       => $aiContent['meta_title'],
-                        'meta_description' => $aiContent['meta_description'],
-                        'tags'             => $aiContent['tags'],
-                    ]);
-
-                    $results[] = [
-                        'row'  => $index + 1,
-                        'name' => $row['name'],
-                        'id'   => $productId,
-                    ];
-
-                    // Pequena pausa para não sobrecarregar a API
-                    usleep(500000); // 0.5s
-                } catch (Throwable $e) {
-                    $errors[] = ['row' => $index + 1, 'name' => $row['name'] ?? '?', 'error' => $e->getMessage()];
-                }
-            }
+            // Criar produto no PrestaShop
+            $productId = $creator->create([
+                'name'              => $productData['name'],
+                'reference'         => $productData['reference'],
+                'price'             => $productData['price'],
+                'description'       => $aiContent['description'],
+                'description_short' => $aiContent['description_short'],
+                'meta_title'        => $aiContent['meta_title'],
+                'meta_description'  => $aiContent['meta_description'],
+                'tags'              => $aiContent['tags'],
+            ]);
 
             echo json_encode([
                 'success' => true,
-                'created' => count($results),
-                'errors'  => count($errors),
-                'results' => $results,
-                'error_details' => $errors,
+                'id'      => $productId,
+                'name'    => $productData['name']
             ]);
         } catch (Throwable $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -171,21 +165,34 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         exit;
     }
 
+    private function processImport()
+    {
+        // Esta função torna-se obsoleta mas mantemos por compatibilidade se necessário
+        // ou podemos removê-la se tivermos certeza que não é mais usada.
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Deprecated. Use import_single.']);
+        exit;
+    }
+
     private function processTestConnection()
     {
         header('Content-Type: application/json');
+        $this->checkAjaxToken();
         
-        $provider = Tools::getValue('ai_provider') ?: null;
-        $model    = Tools::getValue('ai_model') ?: null;
+        $provider = strip_tags((string) Tools::getValue('ai_provider')) ?: null;
+        $model    = strip_tags((string) Tools::getValue('ai_model')) ?: null;
         $apiKey   = '';
 
         if ($provider === 'openai') {
-            $apiKey = Tools::getValue('api_key') ?: '';
+            $apiKey = (string) Tools::getValue('api_key');
         } elseif ($provider === 'gemini') {
-            $apiKey = Tools::getValue('gemini_key') ?: '';
+            $apiKey = (string) Tools::getValue('gemini_key');
         } elseif ($provider === 'groq') {
-            $apiKey = Tools::getValue('groq_key') ?: '';
+            $apiKey = (string) Tools::getValue('groq_key');
         }
+        
+        // Remover espaços e caracteres de controlo das chaves
+        $apiKey = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $apiKey));
         
         try {
             if (!$provider) {
@@ -199,6 +206,18 @@ class AdminBulkGeniusAiController extends ModuleAdminController
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
+    }
+
+    public function checkAjaxToken()
+    {
+        $token = Tools::getValue('token');
+        $validToken = Tools::getAdminTokenLite('AdminBulkGeniusAi');
+
+        if (!$token || $token !== $validToken) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Sessão inválida ou token CSRF em falta. Por favor, recarregue a página.']);
+            exit;
+        }
     }
 
     private function renderPage()
