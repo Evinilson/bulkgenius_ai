@@ -21,7 +21,7 @@
         <input type="hidden" name="submitConfig" value="1">
 
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <div class="form-group">
               <label>{l s='Provedor de IA' mod='bulkgenius_ai'}</label>
               <select name="ai_provider" id="ai_provider" class="form-control">
@@ -31,7 +31,15 @@
               </select>
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>{l s='Modelo IA' mod='bulkgenius_ai'}</label>
+              <select name="ai_model" id="ai_model" class="form-control" data-current="{$ai_model}">
+                {* Populado via JS *}
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4">
             <div class="form-group">
               <label>{l s='Idioma dos produtos' mod='bulkgenius_ai'}</label>
               <select name="lang" class="form-control">
@@ -47,7 +55,8 @@
           <div class="provider-fields" id="fields-openai" {if $ai_provider!='openai'}style="display:none"{/if}>
             <div class="form-group">
               <label>{l s='Chave API OpenAI' mod='bulkgenius_ai'} <span class="text-danger">*</span></label>
-              <input type="password" name="api_key" class="form-control" value="{$api_key|escape:'html':'UTF-8'}" placeholder="sk-...">
+              <input type="password" name="api_key" class="form-control" value="" 
+                     placeholder="{if $has_api_key}•••••••• (configurada){else}sk-...{/if}">
               <div class="help-block">{l s='Obtém a tua chave em platform.openai.com' mod='bulkgenius_ai'}</div>
               <button type="button" class="btn btn-info btn-test-connection" data-provider="openai" style="margin-top:10px">
                 <i class="icon-refresh"></i> {l s='Testar Ligação OpenAI' mod='bulkgenius_ai'}
@@ -58,7 +67,8 @@
           <div class="provider-fields" id="fields-gemini" {if $ai_provider!='gemini'}style="display:none"{/if}>
             <div class="form-group">
               <label>{l s='Chave API Gemini' mod='bulkgenius_ai'} <span class="text-danger">*</span></label>
-              <input type="text" name="gemini_key" value="{$gemini_key|escape:'html':'UTF-8'}" class="form-control" placeholder="AIza...">
+              <input type="password" name="gemini_key" class="form-control" value="" 
+                     placeholder="{if $has_gemini_key}•••••••• (configurada){else}AIza...{/if}">
               <div class="help-block">{l s='Obtém a tua chave em aistudio.google.com' mod='bulkgenius_ai'}</div>
               <button type="button" class="btn btn-info btn-test-connection" data-provider="gemini" style="margin-top:10px">
                 <i class="icon-refresh"></i> {l s='Testar Ligação Gemini' mod='bulkgenius_ai'}
@@ -69,7 +79,8 @@
           <div class="provider-fields" id="fields-groq" {if $ai_provider!='groq'}style="display:none"{/if}>
             <div class="form-group">
               <label>{l s='Chave API Groq' mod='bulkgenius_ai'} <span class="text-danger">*</span></label>
-              <input type="text" name="groq_key" value="{$groq_key|escape:'html':'UTF-8'}" class="form-control" placeholder="gsk_...">
+              <input type="password" name="groq_key" class="form-control" value="" 
+                     placeholder="{if $has_groq_key}•••••••• (configurada){else}gsk_...{/if}">
               <div class="help-block">{l s='Obtém a tua chave em console.groq.com' mod='bulkgenius_ai'}</div>
               <button type="button" class="btn btn-info btn-test-connection" data-provider="groq" style="margin-top:10px">
                 <i class="icon-refresh"></i> {l s='Testar Ligação Groq' mod='bulkgenius_ai'}
@@ -81,19 +92,23 @@
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
-              <label>{l s='Modelo IA' mod='bulkgenius_ai'}</label>
-              <select name="ai_model" id="ai_model" class="form-control" data-current="{$ai_model}">
-                {* Populado via JS *}
-              </select>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group">
               <label>{l s='Categoria padrão' mod='bulkgenius_ai'}</label>
               <select name="id_category" class="form-control">
                 {foreach from=$categories item=cat}
                   <option value="{$cat.id_category}" {if $id_category==$cat.id_category}selected{/if}>
                     {$cat.name|escape:'html':'UTF-8'}
+                  </option>
+                {/foreach}
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>{l s='Regra de IVA padrão' mod='bulkgenius_ai'}</label>
+              <select name="id_tax_rule" class="form-control">
+                {foreach from=$tax_rules item=tr}
+                  <option value="{$tr.id_tax_rules_group}" {if $id_tax_rule==$tr.id_tax_rules_group}selected{/if}>
+                    {$tr.name|escape:'html':'UTF-8'}
                   </option>
                 {/foreach}
               </select>

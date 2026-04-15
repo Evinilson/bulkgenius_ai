@@ -56,12 +56,27 @@ class AdminBulkGeniusAiController extends ModuleAdminController
     private function saveConfig()
     {
         Configuration::updateValue('BULKGENIUS_AI_PROVIDER', Tools::getValue('ai_provider'));
-        Configuration::updateValue('BULKGENIUS_AI_API_KEY', Tools::getValue('api_key'));
-        Configuration::updateValue('BULKGENIUS_AI_GEMINI_KEY', Tools::getValue('gemini_key'));
-        Configuration::updateValue('BULKGENIUS_AI_GROQ_KEY', Tools::getValue('groq_key'));
+        
+        // Só atualizar chaves se não estiverem vazias (Segurança)
+        $apiKey = Tools::getValue('api_key');
+        if (!empty($apiKey)) {
+            Configuration::updateValue('BULKGENIUS_AI_API_KEY', $apiKey);
+        }
+        
+        $geminiKey = Tools::getValue('gemini_key');
+        if (!empty($geminiKey)) {
+            Configuration::updateValue('BULKGENIUS_AI_GEMINI_KEY', $geminiKey);
+        }
+
+        $groqKey = Tools::getValue('groq_key');
+        if (!empty($groqKey)) {
+            Configuration::updateValue('BULKGENIUS_AI_GROQ_KEY', $groqKey);
+        }
+
         Configuration::updateValue('BULKGENIUS_AI_MODEL', Tools::getValue('ai_model'));
         Configuration::updateValue('BULKGENIUS_AI_LANG', Tools::getValue('lang'));
         Configuration::updateValue('BULKGENIUS_AI_CATEGORY', (int) Tools::getValue('id_category'));
+        Configuration::updateValue('BULKGENIUS_AI_TAX_RULE', (int) Tools::getValue('id_tax_rule'));
 
         $this->confirmations[] = $this->l('Configurações guardadas com sucesso!');
     }
@@ -185,10 +200,19 @@ class AdminBulkGeniusAiController extends ModuleAdminController
 
         if ($provider === 'openai') {
             $apiKey = (string) Tools::getValue('api_key');
+            if (empty($apiKey)) {
+                $apiKey = Configuration::get('BULKGENIUS_AI_API_KEY');
+            }
         } elseif ($provider === 'gemini') {
             $apiKey = (string) Tools::getValue('gemini_key');
+            if (empty($apiKey)) {
+                $apiKey = Configuration::get('BULKGENIUS_AI_GEMINI_KEY');
+            }
         } elseif ($provider === 'groq') {
             $apiKey = (string) Tools::getValue('groq_key');
+            if (empty($apiKey)) {
+                $apiKey = Configuration::get('BULKGENIUS_AI_GROQ_KEY');
+            }
         }
         
         // Remover espaços e caracteres de controlo das chaves
@@ -223,24 +247,30 @@ class AdminBulkGeniusAiController extends ModuleAdminController
     private function renderPage()
     {
         $categories = Category::getSimpleCategories($this->context->language->id);
+        $taxRules = TaxRulesGroup::getTaxRulesGroups(true);
 
         $this->context->smarty->assign([
             'module_dir'     => $this->module->getPathUri(),
             'action_url'     => $this->context->link->getAdminLink('AdminBulkGeniusAi'),
             'admin_token'    => Tools::getAdminTokenLite('AdminBulkGeniusAi'),
             'ai_provider'    => Configuration::get('BULKGENIUS_AI_PROVIDER'),
-            'api_key'        => Configuration::get('BULKGENIUS_AI_API_KEY'),
-            'gemini_key'     => Configuration::get('BULKGENIUS_AI_GEMINI_KEY'),
-            'groq_key'       => Configuration::get('BULKGENIUS_AI_GROQ_KEY'),
+
+            // Segurança: Nunca enviar as chaves reais para o template (Inspector)
+            'has_api_key'    => !empty(Configuration::get('BULKGENIUS_AI_API_KEY')),
+            'has_gemini_key' => !empty(Configuration::get('BULKGENIUS_AI_GEMINI_KEY')),
+            'has_groq_key'   => !empty(Configuration::get('BULKGENIUS_AI_GROQ_KEY')),
+
             'ai_model'       => Configuration::get('BULKGENIUS_AI_MODEL'),
             'lang'           => Configuration::get('BULKGENIUS_AI_LANG'),
             'id_category'    => (int) Configuration::get('BULKGENIUS_AI_CATEGORY'),
+            'id_tax_rule'    => (int) Configuration::get('BULKGENIUS_AI_TAX_RULE'),
             'categories'     => $categories,
+            'tax_rules'      => $taxRules,
             'confirmations'  => $this->confirmations,
             'errors'         => $this->errors,
         ]);
 
-        $this->setTemplate('main.tpl');
+        $this->setTemplate('bulkgenius_ai/configure.tpl');
     }
 
     public function setMedia($isNewTheme = false)

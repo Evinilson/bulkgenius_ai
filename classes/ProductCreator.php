@@ -56,8 +56,8 @@ class ProductCreator
         $product->price                 = (float) $data['price'];
         $product->id_category_default   = $this->defaultCategoryId;
         
-        // Correção da lógica de impostos
-        $product->id_tax_rules_group    = (int) \Configuration::get('PS_TAX_RULES_GROUP') ?: 1;
+        // Correção da lógica de impostos (Usar regra selecionada nas configurações)
+        $product->id_tax_rules_group    = (int) \Configuration::get('BULKGENIUS_AI_TAX_RULE') ?: 1;
         
         $product->quantity              = 0;
         $product->minimal_quantity       = 1;

@@ -154,9 +154,12 @@ bulkgenius_ai/
 │   └── ProductCreator.php               # Creates products via PrestaShop API
 └── views/
     ├── templates/admin/
-    │   └── main.tpl                      # Smarty admin template
-    ├── css/admin.css
-    └── js/admin.js
+    │   └── bulkgenius_ai/
+    │       └── configure.tpl             # Main interface: AI configurations and import dashboard
+    ├── css/
+    │   └── admin.css                    # Exclusive styles for the module's administrative interface
+    └── js/
+        └── admin.js                     # Client-side logic: upload, preview, and AI progress via AJAX
 ```
 
 The AI layer follows a clean **Interface → Abstract → Implementation** pattern, making it easy to add new providers (e.g., Anthropic Claude, Mistral) without changing any existing code.
@@ -172,7 +175,7 @@ The AI layer follows a clean **Interface → Abstract → Implementation** patte
 - [ ] **AI content editor** — Regenerate content for individual products directly from the product page
 - [ ] Image generation via AI (DALL·E, Imagen)
 - [ ] Per-product category assignment from Excel
-- [ ] Import progress bar (product by product)
+- [x] Import progress bar (product by product)
 - [ ] WooCommerce support
 - [ ] PrestaShop Addons Marketplace release
 
