@@ -35,7 +35,9 @@ class Bulkgenius_Ai extends Module
     {
         return parent::install()
             && $this->installTab()
-            && $this->installConfig();
+            && $this->installConfig()
+            && $this->registerHook('displayAdminProductsExtra')
+            && $this->registerHook('actionAdminControllerSetMedia');
     }
 
     public function uninstall()
@@ -96,8 +98,47 @@ class Bulkgenius_Ai extends Module
 
     public function getContent()
     {
+        // Auto-registo de hooks para facilitar o desenvolvimento
+        $hooks = ['displayAdminProductsExtra', 'actionAdminControllerSetMedia'];
+        foreach ($hooks as $hook) {
+            if (!$this->isRegisteredInHook($hook)) {
+                $this->registerHook($hook);
+            }
+        }
+
         Tools::redirectAdmin(
             $this->context->link->getAdminLink('AdminBulkGeniusAi')
         );
+    }
+
+    /**
+     * Injeta o HTML base na página de produto
+     */
+    public function hookDisplayAdminProductsExtra($params)
+    {
+        return $this->display(__FILE__, 'views/templates/admin/hook/product_extra.tpl');
+    }
+
+    /**
+     * Carrega os ficheiros de suporte necessários
+     */
+    public function hookActionAdminControllerSetMedia($params)
+    {
+        $controller = $this->context->controller;
+        $controller_name = Tools::getValue('controller');
+        
+        $is_product_page = ($controller_name === 'AdminProducts' || $controller->php_self === 'AdminProducts');
+
+        if ($is_product_page) {
+            Media::addJsDef([
+                'AI_IMPORTER' => [
+                    'actionUrl' => $this->context->link->getAdminLink('AdminBulkGeniusAi'),
+                    'token' => Tools::getAdminTokenLite('AdminBulkGeniusAi')
+                ]
+            ]);
+
+            $controller->addJS($this->getPathUri() . 'views/js/admin_product.js');
+            $controller->addCSS($this->getPathUri() . 'views/css/admin_product.css');
+        }
     }
 }

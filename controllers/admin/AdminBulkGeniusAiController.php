@@ -46,12 +46,72 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 case 'test_connection':
                     $this->processTestConnection();
                     break;
+                case 'regenerate_product':
+                    $this->processRegenerateProduct();
+                    break;
             }
             exit;
         }
 
         $this->renderPage();
     }
+
+    private function processRegenerateProduct()
+    {
+        header('Content-Type: application/json');
+        $this->checkAjaxToken();
+
+        $name = Tools::getValue('name');
+        $currentDesc = Tools::getValue('current_content');
+        $langCode = Tools::getValue('lang_code', 'pt');
+        $type = Tools::getValue('type', 'description'); // 'summary' or 'description' or 'meta_description'
+
+        $provider = Configuration::get('BULKGENIUS_AI_PROVIDER') ?: 'openai';
+        $keyMap = [
+            'openai' => ['key' => 'BULKGENIUS_AI_API_KEY', 'label' => 'OpenAI'],
+            'gemini' => ['key' => 'BULKGENIUS_AI_GEMINI_KEY', 'label' => 'Google Gemini'],
+            'groq' => ['key' => 'BULKGENIUS_AI_GROQ_KEY', 'label' => 'Groq'],
+        ];
+        $providerInfo = $keyMap[$provider] ?? $keyMap['openai'];
+        $apiKey = Configuration::get($providerInfo['key']);
+
+        if (empty($name)) {
+            echo json_encode(['success' => false, 'message' => 'O nome do produto é necessário para gerar conteúdo.']);
+            exit;
+        }
+
+        if (empty($apiKey)) {
+            echo json_encode(['success' => false, 'message' => 'Chave da API não configurada.']);
+            exit;
+        }
+
+        try {
+            $aiService = AiServiceFactory::create();
+            
+            // Gerar conteúdo com IA
+            $aiContent = $aiService->generateProductContent(
+                (string)$name,
+                '', // Referência opcional
+                (string)$currentDesc,
+                $langCode
+            );
+
+            echo json_encode([
+                'success' => true,
+                'content' => [
+                    'description_short' => $type === 'summary' ? $aiContent['description_short'] : $aiContent['description_short'],
+                    'description' => $type === 'description' ? $aiContent['description'] : $aiContent['description'],
+                    'meta_title' => $aiContent['meta_title'],
+                    'meta_description' => $type === 'meta_description' ? $aiContent['meta_description'] : $aiContent['meta_description'],
+                    'tags' => $aiContent['tags'],
+                ]
+            ]);
+        } catch (Throwable $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
 
     private function saveConfig()
     {
@@ -138,7 +198,7 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         $apiKey = Configuration::get($providerInfo['key']);
 
         if (empty($apiKey)) {
-            echo json_encode(['success' => false, 'message' => 'Chave API ' . $providerInfo['label'] . ' não configurada.']);
+            echo json_encode(['success' => false, 'message' => 'Chave da API não configurada.']);
             exit;
         }
 

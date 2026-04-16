@@ -130,7 +130,7 @@ class ProductCreator
         $count = 1;
 
         // Verificar se o slug já existe nesta língua
-        while (\Product::getIdByReference($slug) || $this->slugExists($slug)) {
+        while ($this->slugExists($slug)) {
             $slug = $baseSlug . '-' . $count;
             $count++;
             if ($count > 100) break; // Segurança

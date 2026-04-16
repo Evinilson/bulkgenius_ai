@@ -1,0 +1,167 @@
+/**
+ * BulkGenius AI - Product Page Button Styles
+ */
+.bg-ai-btn-injected {
+    display: inline-flex !important;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: 11px;
+    height: auto;
+    vertical-align: middle;
+    background: #4ca1af;
+    color: white !important;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(76, 161, 175, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.bg-ai-btn-injected:hover {
+    transform: translateY(-2px);
+    background: #3b8d99;
+    box-shadow: 0 6px 15px rgba(59, 141, 153, 0.4);
+    color: white !important;
+    text-decoration: none;
+}
+
+.bg-ai-btn-injected i {
+    margin-right: 5px;
+}
+
+/* Estilo do Modal Premium */
+#bg-ai-modal {
+    z-index: 99999 !important;
+}
+
+#bg-ai-modal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+#bg-ai-modal .modal-body {
+    padding: 24px 28px;
+}
+
+#bg-ai-modal .modal-header {
+    background: linear-gradient(135deg, #4ca1af 0%, #3b8d99 100%);
+    color: white;
+    border-bottom: none;
+}
+
+#bg-ai-modal .modal-header .close {
+    color: white;
+    opacity: 0.8;
+}
+
+.bg-ai-feedback {
+    margin-bottom: 18px;
+    border-radius: 8px;
+    border: 1px solid #f1b0b7;
+    background: #fff4f5;
+    color: #8a1f2d;
+}
+
+.bg-ai-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.bg-ai-section {
+    width: 100%;
+}
+
+.bg-ai-current-card,
+.bg-ai-result-card {
+    border-radius: 10px;
+}
+
+.bg-ai-divider {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bg-ai-divider-line {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(76, 161, 175, 0.08) 0%, rgba(76, 161, 175, 0.45) 50%, rgba(76, 161, 175, 0.08) 100%);
+}
+
+.bg-ai-divider-badge {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid rgba(76, 161, 175, 0.25);
+    box-shadow: 0 8px 18px rgba(76, 161, 175, 0.12);
+}
+
+.bg-ai-divider-badge i {
+    font-size: 20px;
+}
+
+.bg-ai-preview-box {
+    min-height: 150px;
+    max-height: 420px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 12px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.result-active {
+    background: #fff;
+    border-color: #4ca1af;
+    box-shadow: inset 0 2px 4px rgba(76, 161, 175, 0.1);
+}
+
+.bg-ai-current-box {
+    min-height: 110px;
+    max-height: 180px;
+}
+
+.bg-ai-result-box {
+    min-height: 320px;
+}
+
+.bg-ai-result-card {
+    transition: all 0.3s ease;
+}
+
+.animate-pulse {
+    animation: bg-ai-pulse 2s infinite;
+}
+
+@keyframes bg-ai-pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.5; }
+}
+
+.modal-backdrop.show {
+    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 767px) {
+    #bg-ai-modal .modal-body {
+        padding: 18px;
+    }
+
+    .bg-ai-result-box {
+        min-height: 240px;
+    }
+}

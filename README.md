@@ -172,7 +172,7 @@ The AI layer follows a clean **Interface → Abstract → Implementation** patte
 - [x] AI content generation (descriptions, SEO, tags)
 - [x] Multi-provider support (OpenAI, Gemini, Groq)
 - [x] Multilingual output (PT / EN)
-- [ ] **AI content editor** — Regenerate content for individual products directly from the product page
+- [x] **AI content editor** — Regenerate content for individual products directly from the product page
 - [ ] Image generation via AI (DALL·E, Imagen)
 - [ ] Per-product category assignment from Excel
 - [x] Import progress bar (product by product)
