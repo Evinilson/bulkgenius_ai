@@ -139,7 +139,7 @@ Go to **Catalogue → BulkGenius AI** and fill in:
 ```
 bulkgenius_ai/
 ├── bulkgenius_ai.php                    # Module entry point
-├── composer.json                         # Dependencies (phpspreadsheet)
+├── composer.json                         # PHP version requirement (>=8.1)
 ├── controllers/
 │   └── admin/
 │       └── AdminBulkGeniusAiController.php

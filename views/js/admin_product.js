@@ -169,29 +169,27 @@
             if (!$btnTemplate.length) return;
 
             const targets = [
-                { text: 'Resumo', selector: 'label, h2, h3, h4' },
-                { text: 'Descrição Meta', selector: 'label' },
-                { text: 'Descrição', selector: 'label, h2, h3, h4' }
+                { containerId: 'product_description_description_short', fieldType: 'Resumo' },
+                { containerId: 'product_description_description', fieldType: 'Descrição' },
+                { containerId: 'product_seo_meta_description', fieldType: 'Descrição Meta' },
             ];
 
             targets.forEach(function (target) {
-                $(target.selector).each(function() {
-                    const $el = $(this);
-                    const text = $el.text().replace(/\s+/g, ' ').trim();
+                const $container = $('#' + target.containerId);
+                if (!$container.length) return;
 
-                    const isMatch = text === target.text;
-                    if (!isMatch) return;
-                    if ($el.closest('.header-toolbar, #header_infos, .page-head').length) return;
-                    if ($el.next('.bg-ai-btn-injected').length) return;
+                const $anchor = $container.prev('h2, h3, h4, label').last();
+                if (!$anchor.length) return;
 
-                    const $newBtn = $btnTemplate.clone(true);
-                    $newBtn.removeAttr('id')
-                           .addClass('bg-ai-btn-injected')
-                           .attr('data-field-type', target.text)
-                           .attr('style', '');
+                if ($anchor.next('.bg-ai-btn-injected').length) return;
 
-                    $el.after($newBtn);
-                });
+                const $newBtn = $btnTemplate.clone(true);
+                $newBtn.removeAttr('id')
+                       .addClass('bg-ai-btn-injected')
+                       .attr('data-field-type', target.fieldType)
+                       .attr('style', '');
+
+                $anchor.after($newBtn);
             });
         }
 
@@ -230,7 +228,15 @@
         // Lógica de Geração por IA
         $('#btn-bg-ai-generate').on('click', function () {
             const $btn = $(this);
-            const productName = $('[id*="name_"]').first().val(); // Captura o nome do produto
+
+            // Apanhar o nome do produto — a div ativa não tem a classe d-none
+            const productName = $('#product_header_name')
+                .find('.js-locale-input:not(.d-none) input')
+                .first().val() || '';
+
+            // Extrair id_product da URL como fallback para o backend ir buscar à BD
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id_product') || '';
 
             if (typeof AI_IMPORTER === 'undefined' || !AI_IMPORTER.actionUrl || !AI_IMPORTER.token) {
                 showFeedback('A configuração AJAX do módulo não está disponível nesta página. Recarregue a página e confirme que o módulo injecta AI_IMPORTER no AdminProducts.');
@@ -251,9 +257,16 @@
                     action: 'regenerate_product',
                     token: AI_IMPORTER.token,
                     name: productName,
+                    id_product: productId,
                     current_content: currentSourceText,
                     type: getFieldConfig(currentFieldType).requestType,
-                    lang_code: $('select#language-selector-langs, select.language-selector').first().val() || 'pt'
+                    // Ler o ISO da língua ativa a partir do botão de língua do nome do produto
+                    // O botão mostra "PT", "ES", etc. — convertemos para lowercase
+                    lang_code: (
+                        $('#product_header_name .js-locale-btn').text().trim().toLowerCase() ||
+                        $('button.js-locale-btn').first().text().trim().toLowerCase() ||
+                        'pt'
+                    )
                 },
                 success: function (response) {
                     if (response.success) {

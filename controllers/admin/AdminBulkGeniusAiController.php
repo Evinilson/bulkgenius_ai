@@ -34,9 +34,6 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         $action = Tools::getValue('action');
         if ($action) {
             switch ($action) {
-                case 'import':
-                    $this->processImport();
-                    break;
                 case 'preview':
                     $this->processPreview();
                     break;
@@ -61,10 +58,31 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         header('Content-Type: application/json');
         $this->checkAjaxToken();
 
-        $name = Tools::getValue('name');
+        $name = strip_tags(trim((string) Tools::getValue('name')));
         $currentDesc = Tools::getValue('current_content');
         $langCode = Tools::getValue('lang_code', 'pt');
-        $type = Tools::getValue('type', 'description'); // 'summary' or 'description' or 'meta_description'
+        $type = Tools::getValue('type', 'description');
+
+        // Resolver o langId — aceitar tanto ISO ('pt') como ID numérico ('2')
+        if (is_numeric($langCode)) {
+            $langId = (int) $langCode;
+        } else {
+            $langId = (int) Language::getIdByIso($langCode);
+        }
+        if (!$langId) {
+            $langId = (int) Configuration::get('PS_LANG_DEFAULT');
+        }
+
+        // Fallback: se o nome não veio do DOM, buscar à BD pelo id_product
+        if (empty($name)) {
+            $idProduct = (int) Tools::getValue('id_product');
+            if ($idProduct > 0) {
+                $product = new Product($idProduct, false, $langId);
+                if (Validate::isLoadedObject($product)) {
+                    $name = $product->name;
+                }
+            }
+        }
 
         $provider = Configuration::get('BULKGENIUS_AI_PROVIDER') ?: 'openai';
         $keyMap = [
@@ -237,15 +255,6 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         } catch (Throwable $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
-        exit;
-    }
-
-    private function processImport()
-    {
-        // Esta função torna-se obsoleta mas mantemos por compatibilidade se necessário
-        // ou podemos removê-la se tivermos certeza que não é mais usada.
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Deprecated. Use import_single.']);
         exit;
     }
 

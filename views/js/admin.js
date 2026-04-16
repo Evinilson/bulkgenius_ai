@@ -214,7 +214,6 @@
     async function startImportProcess() {
       isImporting = true;
       stopImportFlag = false;
-      currentIndex = 0;
       stats = { success: 0, error: 0 };
 
       const previewSection = document.getElementById('preview-section');
