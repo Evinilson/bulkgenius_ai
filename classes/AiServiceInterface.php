@@ -22,7 +22,8 @@ interface AiServiceInterface
         string $name,
         string $reference,
         string $shortDesc,
-        string $lang = 'pt'
+        string $lang = 'pt',
+        string $type = 'full'
     ): array;
 
     /**
