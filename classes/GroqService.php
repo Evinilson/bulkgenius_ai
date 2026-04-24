@@ -18,9 +18,10 @@ class GroqService extends AbstractAiService
         string $name,
         string $reference,
         string $shortDesc,
-        string $lang = 'pt'
+        string $lang = 'pt',
+        string $type = 'full'
     ): array {
-        $prompt = $this->getPromptTemplate($name, $reference, $shortDesc, $lang);
+        $prompt = $this->getPromptTemplate($name, $reference, $shortDesc, $lang, $type);
 
         $payload = json_encode([
             'model'       => $this->model ?: 'llama-3.1-8b-instant',

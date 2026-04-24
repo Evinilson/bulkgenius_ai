@@ -106,12 +106,19 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         try {
             $aiService = AiServiceFactory::create();
             
+            // Mapear o tipo do frontend para o PromptManager
+            $promptType = $type;
+            if ($type === 'summary') {
+                $promptType = 'description_short';
+            }
+
             // Gerar conteúdo com IA
             $aiContent = $aiService->generateProductContent(
                 (string)$name,
                 '', // Referência opcional
                 (string)$currentDesc,
-                $langCode
+                $langCode,
+                $promptType
             );
 
             echo json_encode([
@@ -119,7 +126,7 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 'content' => [
                     'description_short' => $type === 'summary' ? $aiContent['description_short'] : $aiContent['description_short'],
                     'description' => $type === 'description' ? $aiContent['description'] : $aiContent['description'],
-                    'meta_title' => $aiContent['meta_title'],
+                    'meta_title' => $aiContent['meta_title'] ?: $name,
                     'meta_description' => $type === 'meta_description' ? $aiContent['meta_description'] : $aiContent['meta_description'],
                     'tags' => $aiContent['tags'],
                 ]
@@ -227,12 +234,13 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 Configuration::get('BULKGENIUS_AI_LANG')
             );
 
-            // Gerar conteúdo com IA
+            // Gerar conteúdo com IA (Sempre 'full' para importação nova)
             $aiContent = $aiService->generateProductContent(
                 $productData['name'],
                 $productData['reference'],
                 $productData['short_description'],
-                Configuration::get('BULKGENIUS_AI_LANG')
+                Configuration::get('BULKGENIUS_AI_LANG'),
+                'full'
             );
 
             // Criar produto no PrestaShop
@@ -242,7 +250,7 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 'price'             => $productData['price'],
                 'description'       => $aiContent['description'],
                 'description_short' => $aiContent['description_short'],
-                'meta_title'        => $aiContent['meta_title'],
+                'meta_title'        => $aiContent['meta_title'] ?: $productData['name'],
                 'meta_description'  => $aiContent['meta_description'],
                 'tags'              => $aiContent['tags'],
             ]);

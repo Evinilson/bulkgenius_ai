@@ -275,8 +275,8 @@
                         else if (currentFieldType === 'Descrição') result = response.content.description;
                         else result = response.content.meta_description;
 
-                        // Usar .html() para 'Descrição' (conteúdo rico), .text() para os restantes
-                        if (currentFieldType === 'Descrição') {
+                        // Usar .html() para 'Resumo' e 'Descrição' (conteúdo HTML), .text() para os restantes
+                        if (currentFieldType === 'Descrição' || currentFieldType === 'Resumo') {
                             $('#bg-ai-result-text').html(result).show();
                         } else {
                             $('#bg-ai-result-text').text(result).show();
@@ -311,8 +311,8 @@
 
         // Lógica para Aplicar a Sugestão
         $('#btn-bg-ai-apply').on('click', function () {
-            const result = (currentFieldType === 'Descrição') 
-                ? $('#bg-ai-result-text').html() 
+            const result = (currentFieldType === 'Descrição' || currentFieldType === 'Resumo')
+                ? $('#bg-ai-result-text').html()
                 : $('#bg-ai-result-text').text();
 
             // Sincronizar com TinyMCE

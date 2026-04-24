@@ -8,17 +8,20 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once _PS_MODULE_DIR_ . 'bulkgenius_ai/classes/AiServiceInterface.php';
+require_once _PS_MODULE_DIR_ . 'bulkgenius_ai/classes/PromptManager.php';
 
 abstract class AbstractAiService implements AiServiceInterface
 {
     protected string $apiKey;
     protected string $model;
     protected int $timeout = 30;
+    protected PromptManager $promptManager;
 
     public function __construct(string $apiKey, string $model)
     {
         $this->apiKey = $apiKey;
         $this->model  = $model;
+        $this->promptManager = new PromptManager();
     }
 
     /**
@@ -48,27 +51,14 @@ abstract class AbstractAiService implements AiServiceInterface
     }
 
     /**
-     * Constrói o prompt padrão para SEO de e-commerce
+     * Constrói o prompt usando o PromptManager
      */
-    protected function getPromptTemplate(string $name, string $reference, string $shortDesc, string $lang): string
+    protected function getPromptTemplate(string $name, string $reference, string $shortDesc, string $lang, string $type = 'full'): string
     {
-        $langLabel = $lang === 'pt' ? 'português europeu' : 'inglês';
-
-        return <<<PROMPT
-És um especialista em copywriting e SEO para e-commerce. Com base nas informações abaixo, gera conteúdo otimizado para um produto de uma loja online.
-
-**Produto:** {$name}
-**Referência:** {$reference}
-**Descrição base:** {$shortDesc}
-
-Responde APENAS em JSON válido, sem markdown, com esta estrutura exata:
-{
-  "description_short": "Descrição curta SEO em {$langLabel}, máximo 160 caracteres, apelativa e com palavra-chave principal.",
-  "description": "Descrição longa em {$langLabel} em HTML (usa <p>, <ul>, <li>, <strong>). Mínimo 150 palavras. Inclui: benefícios, características, usos/aplicações. Tom profissional e persuasivo.",
-  "meta_title": "Meta título SEO em {$langLabel}, máximo 60 caracteres. Inclui nome do produto.",
-  "meta_description": "Meta descrição em {$langLabel}, máximo 155 caracteres. Persuasiva, com chamada à ação.",
-  "tags": "Lista de 5 a 8 tags/palavras-chave separadas por vírgula, em {$langLabel}, relevantes para o produto."
-}
-PROMPT;
+        return $this->promptManager->getPrompt($type, [
+            'name' => $name,
+            'reference' => $reference,
+            'shortDesc' => $shortDesc
+        ], $lang);
     }
 }

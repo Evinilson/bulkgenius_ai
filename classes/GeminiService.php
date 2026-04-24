@@ -18,11 +18,12 @@ class GeminiService extends AbstractAiService
         string $name,
         string $reference,
         string $shortDesc,
-        string $lang = 'pt'
+        string $lang = 'pt',
+        string $type = 'full'
     ): array {
         $model = $this->model ?: 'gemini-1.5-flash';
         $url   = sprintf(self::API_URL_TEMPLATE, $model, $this->apiKey);
-        $prompt = $this->getPromptTemplate($name, $reference, $shortDesc, $lang);
+        $prompt = $this->getPromptTemplate($name, $reference, $shortDesc, $lang, $type);
 
         $payload = json_encode([
             'contents' => [

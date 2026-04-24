@@ -44,7 +44,7 @@ class ProductCreator
         $product->name              = [$this->langId => $this->sanitize($data['name'])];
         $product->description       = [$this->langId => $data['description']];
         $product->description_short = [$this->langId => $this->sanitize($data['description_short'])];
-        $product->meta_title        = [$this->langId => $this->sanitize($data['meta_title'])];
+        $product->meta_title        = [$this->langId => $this->sanitize($data['meta_title'] ?? $data['name'])];
         $product->meta_description  = [$this->langId => $this->sanitize($data['meta_description'])];
         
         // Slug único
