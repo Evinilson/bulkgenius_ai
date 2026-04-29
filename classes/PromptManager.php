@@ -28,7 +28,7 @@ class PromptManager
         if ($lang === 'pt') {
             $ptSpecific = "\n   - IMPORTANT: Use STRICTLY European Portuguese (PT-PT) vocabulary and grammar.\n" .
                           "   - AVOID Brazilian Portuguese (PT-BR) terms (e.g., use 'ecrã' instead of 'tela', 'telemóvel' instead of 'celular').\n" .
-                          "   - Use PT-PT formal or informal standards ('tu/vós' logic), never Brazilian usage of 'você'.";
+                          "   - Use a formal and professional tone. NEVER address the customer as 'tu'. Use third-person address (formal PT-PT standard).";
         }
 
         switch ($type) {

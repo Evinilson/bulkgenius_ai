@@ -40,6 +40,7 @@
 
     const aiProvider = document.getElementById('ai_provider');
     const aiModel = document.getElementById('ai_model');
+    const loadGroqModelsBtn = document.getElementById('btn-load-groq-models');
 
     if (aiProvider && aiModel) {
       aiProvider.addEventListener('change', function () {
@@ -55,15 +56,46 @@
 
       // Inicializar no carregamento
       updateModelOptions(aiProvider.value, aiModel.getAttribute('data-current'));
+
+      // Listener para quando o modelo muda (para intercetar a opção "ver mais")
+      aiModel.addEventListener('change', function () {
+        if (this.value === 'load_more' && aiProvider.value === 'groq') {
+          loadGroqModels();
+        }
+      });
+
+      if (loadGroqModelsBtn) {
+        loadGroqModelsBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          loadGroqModels();
+        });
+      }
     }
 
     function updateModelOptions(provider, currentModel) {
       if (!aiModel || !providerModels[provider]) return;
 
       const models = providerModels[provider];
-      aiModel.innerHTML = models.map(m =>
+      const hasCurrentModel = currentModel && models.some(m => m.id === currentModel);
+      let html = models.map(m =>
         `<option value="${m.id}" ${m.id === currentModel ? 'selected' : ''}>${m.name}</option>`
       ).join('');
+
+      if (currentModel && !hasCurrentModel && currentModel !== 'load_more') {
+        html = `<option value="${currentModel}" selected>${currentModel}</option>` + html;
+      }
+
+      if (provider === 'groq') {
+        html += `<option disabled>──────────</option>`;
+        html += `<option value="load_more" style="text-decoration: underline;">Procurar mais modelos atualizados...</option>`;
+      }
+
+      aiModel.innerHTML = html;
+      aiModel.setAttribute('data-current', aiModel.value);
+
+      if (loadGroqModelsBtn) {
+        loadGroqModelsBtn.style.display = provider === 'groq' ? 'inline-block' : 'none';
+      }
     }
 
     // ── Drag & Drop ────────────────────────────────────────
@@ -545,6 +577,64 @@
         }
       });
     });
+
+    // ── Carregar Modelos Dinamicamente ──────────────────────
+    function loadGroqModels() {
+      const select = $(aiModel);
+      const originalValue = select.val() !== 'load_more' ? select.val() : (select.attr('data-current') || '');
+      const btn = $(loadGroqModelsBtn);
+      const btnHtml = btn.length ? btn.html() : '';
+      
+      select.prop('disabled', true);
+      if (btn.length) {
+        btn.prop('disabled', true).html('<i class="icon-refresh icon-spin"></i> A carregar modelos...');
+      }
+
+      const loadMoreOption = select.find('option[value="load_more"]');
+      if (loadMoreOption.length) {
+        loadMoreOption.text('A carregar modelos...');
+      }
+
+      const fd = new FormData();
+      fd.append('action', 'get_groq_models');
+      fd.append('groq_key', $('input[name="groq_key"]').val());
+      fd.append('ajax', '1');
+      fd.append('token', window.AI_IMPORTER && window.AI_IMPORTER.token || '');
+
+      $.ajax({
+        url: actionUrl,
+        method: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function (res) {
+          select.prop('disabled', false);
+          if (btn.length) {
+            btn.prop('disabled', false).html(btnHtml);
+          }
+
+          if (res.success && Array.isArray(res.models) && res.models.length) {
+            providerModels['groq'] = res.models;
+            if (aiProvider.value === 'groq') {
+              const selectedModel = res.models.some(m => m.id === originalValue) ? originalValue : res.models[0].id;
+              updateModelOptions('groq', selectedModel);
+            }
+            showAlert('success', res.models.length + ' modelos carregados com sucesso!');
+          } else {
+            showAlert('danger', 'Erro: ' + (res.message || 'Falha ao carregar modelos.'));
+            if (aiProvider.value === 'groq') updateModelOptions('groq', originalValue);
+          }
+        },
+        error: function () {
+          select.prop('disabled', false);
+          if (btn.length) {
+            btn.prop('disabled', false).html(btnHtml);
+          }
+          showAlert('danger', 'Erro de comunicação ao obter modelos do Groq.');
+          if (aiProvider.value === 'groq') updateModelOptions('groq', originalValue);
+        }
+      });
+    }
 
     function capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);

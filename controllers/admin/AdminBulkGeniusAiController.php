@@ -46,6 +46,9 @@ class AdminBulkGeniusAiController extends ModuleAdminController
                 case 'regenerate_product':
                     $this->processRegenerateProduct();
                     break;
+                case 'get_groq_models':
+                    $this->processGetGroqModels();
+                    break;
             }
             exit;
         }
@@ -158,7 +161,10 @@ class AdminBulkGeniusAiController extends ModuleAdminController
             Configuration::updateValue('BULKGENIUS_AI_GROQ_KEY', $groqKey);
         }
 
-        Configuration::updateValue('BULKGENIUS_AI_MODEL', Tools::getValue('ai_model'));
+        $aiModel = trim((string) Tools::getValue('ai_model'));
+        if ($aiModel !== '' && $aiModel !== 'load_more') {
+            Configuration::updateValue('BULKGENIUS_AI_MODEL', $aiModel);
+        }
         Configuration::updateValue('BULKGENIUS_AI_LANG', Tools::getValue('lang'));
         Configuration::updateValue('BULKGENIUS_AI_CATEGORY', (int) Tools::getValue('id_category'));
         Configuration::updateValue('BULKGENIUS_AI_TAX_RULE', (int) Tools::getValue('id_tax_rule'));
@@ -308,6 +314,89 @@ class AdminBulkGeniusAiController extends ModuleAdminController
         }
         exit;
     }
+
+    private function processGetGroqModels()
+    {
+        header('Content-Type: application/json');
+        $this->checkAjaxToken();
+
+        $apiKey = (string) Tools::getValue('groq_key');
+        if (empty($apiKey)) {
+            $apiKey = Configuration::get('BULKGENIUS_AI_GROQ_KEY');
+        }
+        $apiKey = trim(preg_replace('/[\x00-\x1F\x7F]/', '', (string) $apiKey));
+
+        if (empty($apiKey)) {
+            echo json_encode(['success' => false, 'message' => 'Chave da API Groq não configurada ou não fornecida.']);
+            exit;
+        }
+
+        if (!function_exists('curl_init')) {
+            echo json_encode(['success' => false, 'message' => 'A extensão cURL do PHP não está disponível.']);
+            exit;
+        }
+
+        $ch = curl_init('https://api.groq.com/openai/v1/models');
+        if (!$ch) {
+            echo json_encode(['success' => false, 'message' => 'Não foi possível iniciar a ligação ao Groq.']);
+            exit;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $apiKey,
+            'Accept: application/json',
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            echo json_encode(['success' => false, 'message' => 'Erro de comunicação com o Groq: ' . $curlError]);
+            exit;
+        }
+
+        if ($httpCode !== 200) {
+            $errorMsg = 'Erro ao obter modelos do Groq.';
+            if ($response) {
+                $decoded = json_decode($response, true);
+                if (isset($decoded['error']['message'])) {
+                    $errorMsg .= ' ' . $decoded['error']['message'];
+                }
+            }
+            echo json_encode(['success' => false, 'message' => $errorMsg]);
+            exit;
+        }
+
+        $data = json_decode($response, true);
+        if (isset($data['data']) && is_array($data['data'])) {
+            $models = [];
+            foreach ($data['data'] as $model) {
+                if (empty($model['id']) || !is_string($model['id'])) {
+                    continue;
+                }
+
+                $models[] = [
+                    'id' => $model['id'],
+                    'name' => $model['id'],
+                ];
+            }
+            
+            // Ordenar por nome (id)
+            usort($models, function ($a, $b) {
+                return strcmp($a['name'], $b['name']);
+            });
+            
+            echo json_encode(['success' => true, 'models' => $models]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Formato de resposta inválido do Groq.']);
+        }
+        exit;
+    }
+
 
     public function checkAjaxToken()
     {

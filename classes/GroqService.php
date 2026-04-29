@@ -26,7 +26,7 @@ class GroqService extends AbstractAiService
         $payload = json_encode([
             'model'       => $this->model ?: 'llama-3.1-8b-instant',
             'messages'    => [
-                ['role' => 'system', 'content' => 'És um especialista em SEO e copywriting para e-commerce. Respondes sempre em JSON válido.'],
+                ['role' => 'system', 'content' => 'Atue como um especialista em SEO e copywriting para e-commerce. Responda sempre em JSON válido.'],
                 ['role' => 'user',   'content' => $prompt],
             ],
             'temperature' => 0.7,
